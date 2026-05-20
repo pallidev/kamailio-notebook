@@ -1,0 +1,30 @@
+{
+  "messages": [],
+  "users": {
+    "jupyter-ai-personas::jupyter_ai_acp_client::ClaudeAcpPersona": {
+      "name": "Claude",
+      "avatar_url": "/api/ai/avatars/jupyter-ai-personas%3A%3Ajupyter_ai_acp_client%3A%3AClaudeAcpPersona",
+      "bot": true,
+      "display_name": "Claude",
+      "color": null,
+      "initials": null,
+      "username": "jupyter-ai-personas::jupyter_ai_acp_client::ClaudeAcpPersona"
+    },
+    "jupyter-ai-personas::jupyter_ai_acp_client::CopilotAcpPersona": {
+      "initials": null,
+      "avatar_url": "/api/ai/avatars/jupyter-ai-personas%3A%3Ajupyter_ai_acp_client%3A%3ACopilotAcpPersona",
+      "color": null,
+      "display_name": "Copilot",
+      "bot": true,
+      "username": "jupyter-ai-personas::jupyter_ai_acp_client::CopilotAcpPersona",
+      "name": "Copilot"
+    }
+  },
+  "attachments": {},
+  "metadata": {
+    "acp_session_ids": {
+      "jupyter-ai-personas::jupyter_ai_acp_client::ClaudeAcpPersona": "6697e496-792f-4cc3-bd7c-2d589e1aa692"
+    },
+    "id": "af34a950-44ec-413d-87e9-24b21bbcd284"
+  }
+}
