@@ -206,7 +206,7 @@ jupyter lab
 ```
 kamailio-notebook/
 ├── src/kamailio_notebook/
-│   ├── kernel.py            # Jupyter 커널 (metakernel 기반)
+│   ├── kernel.py            # Jupyter 커널 (ipykernel 기반)
 │   ├── cfg_executor.py      # cfg 표현식 파서 & 실행기
 │   ├── cfg_tracer.py        # Route 추적 & 분기 시각화
 │   ├── sip_message.py       # SIP 메시지 mock 엔진
@@ -232,13 +232,32 @@ kamailio-notebook/
 
 ## AI 어시스턴트 학습
 
-이 커널은 [Jupyter AI](https://github.com/jupyterlab/jupyter-ai)와 완벽하게 연동되어 JupyterLab 내에서 AI 채팅 패널을 사용할 수 있습니다:
+이 커널은 [Jupyter AI v3](https://github.com/jupyterlab/jupyter-ai)와 완벽하게 연동되어, [ACP (Agent Client Protocol)](https://jupyter-ai.readthedocs.io/en/v3/getting-started.html)을 통해 JupyterLab 내에서 AI 채팅 패널을 사용할 수 있습니다.
 
-1. Jupyter AI 설치: `pip install jupyter-ai`
-2. LLM 설정 (Claude, ChatGPT, Ollama 등)
-3. "`ds_select_dst`가 뭘 하는거야?" 또는 "REGISTER 처리는 어떻게 해?" 등 질문
+### 설정
 
-AI가 노트북 컨텍스트를 볼 수 있어서 실제 코드를 기반으로 설명합니다.
+```bash
+# 1. Jupyter AI 설치
+pip install jupyter-ai
+
+# 2. Claude Code CLI 설치 (또는 원하는 에이전트)
+#    참고: https://docs.anthropic.com/en/docs/claude-code
+
+# 3. Claude Code ACP 어댑터 설치
+npm install -g @agentclientprotocol/claude-agent-acp
+
+# 4. JupyterLab 재시작
+jupyter lab
+```
+
+### 사용법
+
+1. 런처에서 **Chat** 카드를 클릭하거나, 채팅 사이드바의 **+** 버튼 클릭
+2. `@Claude $ru가 뭐야?` 입력 — 에이전트가 노트북 컨텍스트를 보고 답변
+3. 에이전트는 파일 읽기/쓰기, 명령어 실행, 노트북 조작 가능
+
+> **팁:** Conda 환경을 사용하는 경우, 먼저 환경 내에 Node.js를 설치하세요:
+> `conda install nodejs && npm install -g @agentclientprotocol/claude-agent-acp`
 
 ---
 
@@ -296,7 +315,7 @@ MIT 라이선스 — [LICENSE](LICENSE) 파일을 참조하세요.
 ## 감사의 말
 
 - [Kamailio SIP Server](https://www.kamailio.org/) — 이 커널이 서비스하는 프로젝트
-- [metakernel](https://github.com/Calysto/metakernel) — Jupyter 커널 프레임워크
+- [ipykernel](https://github.com/ipython/ipykernel) — Jupyter 커널 프레임워크
 - [Jupyter AI](https://github.com/jupyterlab/jupyter-ai) — JupyterLab AI 채팅 연동
 
 ---

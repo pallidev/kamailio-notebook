@@ -247,7 +247,7 @@ The `notebooks/curriculum/` directory contains structured lessons for all skill 
 ```
 kamailio-notebook/
 ├── src/kamailio_notebook/
-│   ├── kernel.py            # Jupyter kernel (metakernel-based)
+│   ├── kernel.py            # Jupyter kernel (ipykernel-based)
 │   ├── cfg_executor.py      # cfg expression parser & executor
 │   ├── cfg_tracer.py        # Route tracing & branch visualization
 │   ├── sip_message.py       # SIP message mock engine
@@ -274,13 +274,32 @@ kamailio-notebook/
 
 ## AI-Assisted Learning
 
-This kernel works seamlessly with [Jupyter AI](https://github.com/jupyterlab/jupyter-ai), giving you an AI chat panel right inside JupyterLab:
+This kernel works seamlessly with [Jupyter AI v3](https://github.com/jupyterlab/jupyter-ai), giving you an AI chat panel right inside JupyterLab via [ACP (Agent Client Protocol)](https://jupyter-ai.readthedocs.io/en/v3/getting-started.html).
 
-1. Install Jupyter AI: `pip install jupyter-ai`
-2. Configure your LLM (Claude, ChatGPT, Ollama, etc.)
-3. Ask questions like "What does `ds_select_dst` do?" or "How do I handle REGISTER?"
+### Setup
 
-The AI can see your notebook context, so it can explain your actual code.
+```bash
+# 1. Install Jupyter AI
+pip install jupyter-ai
+
+# 2. Install Claude Code CLI (or your preferred agent)
+#    Follow: https://docs.anthropic.com/en/docs/claude-code
+
+# 3. Install the ACP adapter for Claude Code
+npm install -g @agentclientprotocol/claude-agent-acp
+
+# 4. Restart JupyterLab
+jupyter lab
+```
+
+### Usage
+
+1. Click the **Chat** card in the launcher, or the **+** button in the chat sidebar
+2. Type `@Claude What does $ru mean?` — the agent sees your notebook context and answers
+3. Agents can read/write files, run commands, and interact with notebooks
+
+> **Tip:** If you use Conda, install Node.js inside your environment first:
+> `conda install nodejs && npm install -g @agentclientprotocol/claude-agent-acp`
 
 ---
 
@@ -340,7 +359,7 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 ## Acknowledgments
 
 - [Kamailio SIP Server](https://www.kamailio.org/) — the project this kernel serves
-- [metakernel](https://github.com/Calysto/metakernel) — Jupyter kernel framework
+- [ipykernel](https://github.com/ipython/ipykernel) — Jupyter kernel framework
 - [Jupyter AI](https://github.com/jupyterlab/jupyter-ai) — AI chat integration for JupyterLab
 
 ---
