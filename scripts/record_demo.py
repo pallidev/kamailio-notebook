@@ -1,21 +1,17 @@
-"""Record ~15s Jupyter Lab demo: notebooks + AI chat + help. WebP for README."""
+"""Record ~15s Jupyter Lab demo: notebooks + AI chat + help. Headed browser with video recording."""
 import asyncio, os
 from playwright.async_api import async_playwright
 
 JUPYTER_URL = "http://127.0.0.1:8888"
-V = "/tmp/kam_demo_frames"
-os.makedirs(V, exist_ok=True)
-FPS = 10
+VIDEO_DIR = "/tmp/kam_video"
+os.makedirs(VIDEO_DIR, exist_ok=True)
 
-async def ss(page, fn):
-    await page.screenshot(path=f"{V}/frame_{fn:05d}.png", full_page=False)
-    return fn + 1
+NOTEBOOKS = [
+    ("notebooks/curriculum/en/01-beginner/01-hello-kamailio.ipynb", "Hello"),
+    ("notebooks/curriculum/en/02-intermediate/01-transformations.ipynb", "Transforms"),
+    ("notebooks/curriculum/en/02-intermediate/02-dispatcher-and-routing.ipynb", "Dispatcher"),
+]
 
-async def burst(page, fn, n, ms=150):
-    for _ in range(n):
-        await page.wait_for_timeout(ms)
-        fn = await ss(page, fn)
-    return fn
 
 async def dismiss(page):
     for _ in range(5):
@@ -29,125 +25,94 @@ async def dismiss(page):
         except:
             break
 
-async def run_notebook(page, fn, url, name, show_every=2):
-    await page.goto(url, wait_until="networkidle")
-    await page.wait_for_timeout(4000)
-    await dismiss(page)
-    await page.wait_for_timeout(1000)
-    panel = page.locator(".jp-NotebookPanel:not(.lm-mod-hidden)")
-    try:
-        if not await panel.is_visible(timeout=3000):
-            return fn
-    except:
-        return fn
-    cells = panel.locator(".jp-Notebook .jp-Cell")
-    total = await cells.count()
-    await cells.first.click()
-    await page.wait_for_timeout(200)
-    fn = await ss(page, fn)
-    for ci in range(total):
-        await page.keyboard.press("Shift+Enter")
-        await page.wait_for_timeout(700)
-        if ci % show_every == 0:
-            fn = await ss(page, fn)
-    fn = await burst(page, fn, 3, 200)
-    print(f"  {name}: {total} cells")
-    return fn
-
 
 async def main():
-    fn = 0
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        ctx = await browser.new_context(viewport={"width": 1920, "height": 1080})
+        browser = await p.chromium.launch(headless=False)
+        ctx = await browser.new_context(
+            viewport={"width": 1920, "height": 1080},
+            record_video_dir=VIDEO_DIR,
+            record_video_size={"width": 1920, "height": 1080},
+        )
         page = await ctx.new_page()
 
-        # 1. Launcher (~1s)
+        # 1. Launcher
         await page.goto(f"{JUPYTER_URL}/lab", wait_until="networkidle")
-        await page.wait_for_timeout(4000)
-        fn = await burst(page, fn, 10, 100)
+        await page.wait_for_timeout(3000)
         print("1. Launcher")
 
-        # 2. Hello Kamailio (~3s)
-        fn = await run_notebook(page, fn,
-            f"{JUPYTER_URL}/lab/tree/notebooks/curriculum/en/01-beginner/01-hello-kamailio.ipynb",
-            "Hello", show_every=2)
+        # 2. Run notebooks
+        for nb_path, nb_name in NOTEBOOKS:
+            print(f"2. {nb_name}")
+            await page.goto(f"{JUPYTER_URL}/lab/tree/{nb_path}", wait_until="networkidle")
+            await page.wait_for_timeout(4000)
+            await dismiss(page)
+            await page.wait_for_timeout(1000)
 
-        # 3. Transformations (~2s)
-        await page.keyboard.press("Control+W")
-        await page.wait_for_timeout(500)
-        fn = await run_notebook(page, fn,
-            f"{JUPYTER_URL}/lab/tree/notebooks/curriculum/en/02-intermediate/01-transformations.ipynb",
-            "Transforms", show_every=3)
+            panel = page.locator(".jp-NotebookPanel:not(.lm-mod-hidden)")
+            try:
+                if not await panel.is_visible(timeout=3000):
+                    continue
+            except:
+                continue
 
-        # 4. Dispatcher (~2s)
-        await page.keyboard.press("Control+W")
-        await page.wait_for_timeout(500)
-        fn = await run_notebook(page, fn,
-            f"{JUPYTER_URL}/lab/tree/notebooks/curriculum/en/02-intermediate/02-dispatcher-and-routing.ipynb",
-            "Dispatcher", show_every=3)
+            cells = panel.locator(".jp-Notebook .jp-Cell")
+            total = await cells.count()
+            await cells.first.click()
+            await page.wait_for_timeout(200)
 
-        # 5. AI Chat with @claude (~5s including fast-forward)
-        print("5. AI Chat")
+            for ci in range(total):
+                await page.keyboard.press("Shift+Enter")
+                await page.wait_for_timeout(800)
+
+            print(f"   {total} cells executed")
+            await page.keyboard.press("Control+W")
+            await page.wait_for_timeout(500)
+
+        # 3. AI Chat - open chat panel
+        print("3. AI Chat")
         try:
-            # Click the Jupyter Chat tab in the right sidebar
             chat_tab = page.locator(".lm-TabBar-tab[title*='Jupyter Chat']")
             if await chat_tab.is_visible(timeout=2000):
                 await chat_tab.click()
                 await page.wait_for_timeout(2000)
-                fn = await burst(page, fn, 5, 150)  # show chat panel
 
-                # Find chat textarea (appears after panel is visible)
-                chat_input = None
-                for sel in [
-                    "textarea[placeholder*='message' i]",
-                    "textarea[placeholder*='chat' i]",
-                    ".jp-chat-input textarea",
-                    "textarea",
-                ]:
-                    loc = page.locator(sel)
-                    if await loc.count() > 0:
-                        # Use the last visible textarea (chat input is usually last)
-                        for i in range(await loc.count()):
-                            if await loc.nth(i).is_visible(timeout=500):
-                                chat_input = loc.nth(i)
-                        if chat_input:
+                # Look for chat input
+                found = False
+                for sel in ["textarea", "[contenteditable='true']", "input[type='text']"]:
+                    els = page.locator(sel)
+                    count = await els.count()
+                    for i in range(count):
+                        el = els.nth(i)
+                        if await el.is_visible():
+                            await el.click()
+                            await page.wait_for_timeout(200)
+                            await page.keyboard.type("@claude What does $ru mean in Kamailio?", delay=30)
+                            await page.wait_for_timeout(500)
+                            await page.keyboard.press("Enter")
+                            print("   Chat message sent")
+
+                            # Wait for response (fast-forward)
+                            await page.wait_for_timeout(15000)
+                            found = True
                             break
+                    if found:
+                        break
 
-                if chat_input and await chat_input.is_visible(timeout=1000):
-                    await chat_input.click()
-                    await page.wait_for_timeout(200)
-
-                    # Type @claude question
-                    await page.keyboard.type("@claude What does $ru mean in Kamailio cfg?", delay=30)
-                    fn = await burst(page, fn, 8, 100)  # show typing
-                    await page.keyboard.press("Enter")
-
-                    # Fast-forward: 1 frame per second for response
-                    for i in range(40):
-                        await page.wait_for_timeout(1000)
-                        fn = await ss(page, fn)
-                        # After getting enough response frames, stop
-                        if i > 10:
-                            # Check if response seems complete
-                            msgs = page.locator("[data-testid='chat-message'], .jp-chat-message, .chat-message")
-                            if await msgs.count() > 1 and i > 15:
-                                fn = await burst(page, fn, 3, 200)
-                                break
-
-                    print(f"  Chat done (fn={fn})")
-                else:
-                    print("  No chat input found")
-                    fn = await burst(page, fn, 5, 200)
+                if not found:
+                    print("   No chat input, trying new chat button")
+                    new_chat = page.locator("button:has-text('New'), button:has-text('+')")
+                    if await new_chat.first.is_visible(timeout=1000):
+                        await new_chat.first.click()
+                        await page.wait_for_timeout(2000)
+                        print("   New chat opened")
             else:
-                print("  No Jupyter Chat tab")
-                fn = await burst(page, fn, 5, 200)
+                print("   Chat tab not found")
         except Exception as e:
-            print(f"  Chat error: {e}")
-            fn = await burst(page, fn, 5, 200)
+            print(f"   Chat error: {e}")
 
-        # 6. %%help (~2s)
-        print("6. Help")
+        # 4. Help command
+        print("4. Help")
         try:
             await page.goto(f"{JUPYTER_URL}/lab", wait_until="networkidle")
             await page.wait_for_timeout(2000)
@@ -167,36 +132,39 @@ async def main():
                 if await editor.first.is_visible(timeout=2000):
                     await editor.first.click()
                     await page.keyboard.type("%%help ds_select_dst", delay=35)
-                    fn = await burst(page, fn, 8, 100)
+                    await page.wait_for_timeout(500)
                     await page.keyboard.press("Shift+Enter")
-                    await page.wait_for_timeout(2000)
-                    fn = await burst(page, fn, 8, 200)
+                    await page.wait_for_timeout(3000)
+                    print("   Help executed")
         except Exception as e:
-            print(f"  Help error: {e}")
+            print(f"   Help error: {e}")
 
+        # Close and save video
+        video_path = await page.video.path()
+        print(f"\nRaw video: {video_path}")
+        await ctx.close()
         await browser.close()
 
-    dur = fn / FPS
-    print(f"\nTotal: {fn} frames, {dur:.1f}s @ {FPS}fps")
-
+    # Convert to mp4 and gif
+    print("Encoding...")
     os.system(
-        f"ffmpeg -y -framerate {FPS} -i {V}/frame_%05d.png "
+        f"ffmpeg -y -i {video_path} "
         f"-c:v libx264 -pix_fmt yuv420p -preset fast -crf 18 "
         f"-vf 'scale=1920:1080' -movflags +faststart "
         f"docs/images/demo-jupyter-lab.mp4 2>/dev/null"
     )
     os.system(
-        f"ffmpeg -y -framerate {FPS} -i {V}/frame_%05d.png "
-        f"-vf 'scale=960:-1:flags=lanczos,fps={FPS}' "
-        f"-vcodec libwebp -lossless 0 -compression_level 6 "
-        f"-q:v 65 -loop 0 -preset default "
-        f"docs/images/demo-jupyter-lab.webp 2>/dev/null"
+        f"ffmpeg -y -i {video_path} "
+        f"-vf 'scale=960:-1:flags=lanczos,fps=10' "
+        f"docs/images/demo-jupyter-lab.gif 2>/dev/null"
     )
-    for ext in ["mp4", "webp"]:
+
+    for ext in ["mp4", "gif"]:
         f = f"docs/images/demo-jupyter-lab.{ext}"
         if os.path.exists(f):
             print(f"  {f}: {os.path.getsize(f)/1024/1024:.1f} MB")
-    os.system(f"rm -rf {V}")
+
+    os.system(f"rm -rf {VIDEO_DIR}")
 
 
 if __name__ == "__main__":
