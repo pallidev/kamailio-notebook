@@ -31,7 +31,7 @@ Kamailio's native `.cfg` scripting language is powerful but has a steep learning
 **kamailio-notebook** brings the Jupyter Notebook experience to Kamailio cfg:
 
 <p align="center">
-  <img src="docs/images/demo-jupyter-lab.gif" width="80%" alt="Jupyter Lab Demo">
+  <img src="docs/images/demo-shorts.webp" width="240" alt="15s Demo">
 </p>
 
 Write cfg code cell-by-cell, see results instantly, mock SIP messages, trace routing logic, and ask an AI assistant about Kamailio — all in one place.

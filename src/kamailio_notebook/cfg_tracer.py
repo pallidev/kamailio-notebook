@@ -106,10 +106,11 @@ class RouteTracer:
             elif step.result and "false" in step.result.lower():
                 style = 'color: #e67e22;'
 
+            result_span = f' <span style="color: #7f8c8d;">&rarr; {step.result}</span>' if step.result else ""
             html_parts.append(
                 f'<div style="margin-left: {indent}px; {style}">'
                 f'{_escape_html(step.statement)}'
-                f'{f" <span style=\"color: #7f8c8d;\">→ {step.result}</span>" if step.result else ""}'
+                f'{result_span}'
                 f'</div>'
             )
 

@@ -15,7 +15,7 @@ from .kamcmd import KamcmdRunner
 from .kamailio_control import KamailioController, VarDiffTable, VarSnapshot
 from .sip_message import SIPMessage, VALID_METHODS
 from .variables import VarValue, VarType, VariableStore
-from .renderer.mermaid import MermaidRenderer, build_flow_from_trace
+from .renderer.mermaid import MermaidRenderer
 
 
 class KamailioKernel(Kernel):
@@ -130,12 +130,6 @@ class KamailioKernel(Kernel):
 
             if result.errors:
                 self._print_err("\n".join(result.errors))
-
-            if result.trace:
-                flow = build_flow_from_trace(result.trace)
-                mermaid_code = flow.render()
-                if mermaid_code:
-                    self._show({"text/plain": mermaid_code, "text/x-mermaid": mermaid_code})
 
             if result.branches:
                 self.tracer.clear()
