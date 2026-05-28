@@ -78,41 +78,47 @@ class KamailioKernel(Kernel):
 
         lines = code.strip().split("\n")
 
+        # Find first non-comment line for magic detection
+        magic_line = next((l for l in lines if not l.strip().startswith("#")), "")
+
         # Handle magics first
-        if lines[0].startswith("%%sip"):
-            self._handle_sip_magic(code)
+        # Strip leading comment lines for magic handlers that parse the code
+        code_stripped = "\n".join(l for l in lines if not l.strip().startswith("#"))
+
+        if magic_line.startswith("%%sip"):
+            self._handle_sip_magic(code_stripped)
             return self._ok()
 
-        if lines[0].startswith("%%kamcmd"):
-            self._handle_kamcmd_magic(code)
+        if magic_line.startswith("%%kamcmd"):
+            self._handle_kamcmd_magic(code_stripped)
             return self._ok()
 
-        if lines[0].startswith("%%vars"):
+        if magic_line.startswith("%%vars"):
             self._handle_vars_magic()
             return self._ok()
 
-        if lines[0].startswith("%%flow"):
+        if magic_line.startswith("%%flow"):
             self._handle_flow_magic()
             return self._ok()
 
-        if lines[0].startswith("%%reset"):
+        if magic_line.startswith("%%reset"):
             self._handle_reset_magic()
             return self._ok()
 
-        if lines[0].startswith("%%trace"):
-            self._handle_trace_magic(code)
+        if magic_line.startswith("%%trace"):
+            self._handle_trace_magic(code_stripped)
             return self._ok()
 
-        if lines[0].startswith("%%diff"):
+        if magic_line.startswith("%%diff"):
             self._handle_diff_magic()
             return self._ok()
 
-        if lines[0].startswith("%%kamailio"):
-            self._handle_kamailio_magic(code)
+        if magic_line.startswith("%%kamailio"):
+            self._handle_kamailio_magic(code_stripped)
             return self._ok()
 
-        if lines[0].startswith("%%help"):
-            topic = lines[0].replace("%%help", "").strip()
+        if magic_line.startswith("%%help"):
+            topic = magic_line.replace("%%help", "").strip()
             self._handle_help_magic(topic)
             return self._ok()
 

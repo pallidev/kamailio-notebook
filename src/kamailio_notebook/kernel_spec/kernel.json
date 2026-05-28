@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/Users/jonginkim/Documents/GitHub/ixio-voice/kamailio-notebook/.venv/bin/python3",
+    "-m",
+    "kamailio_notebook.kernel",
+    "-f",
+    "{connection_file}"
+  ],
+  "display_name": "Kamailio CFG",
+  "language": "kamailio-cfg",
+  "mimetype": "text/x-kamailio-cfg",
+  "file_extension": ".cfg",
+  "codemirror_mode": "shell",
+  "interrupt_mode": "message"
+}
